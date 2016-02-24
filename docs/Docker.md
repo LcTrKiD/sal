@@ -70,3 +70,44 @@ It is not recommended to run unreleased versions in production, but images built
 
 While not specific to Sal, [these slides](http://grahamgilbert.com/images/posts/2015-11-12/ImagrLab.pdf) on using Docker give an overview of a testing workflow, and the tools can be installed quickly by running [`autopkg install DockerToolbox`](https://github.com/autopkg/homebysix-recipes/blob/master/Docker/DockerToolbox.install.recipe).
 
+## Upgrading Database
+
+With the database container you wish to upgrade running, do the following:
+
+Display your container's IP Address:
+```bash
+$ docker inspect postgres-sal | grep “IPAddress”
+```
+
+_Note:_ For the following commands replace $IPADRESS with your container's IP Address.
+
+Backup your current sal database with:
+```bash
+$ sudo -u postgres psql -h $IPADRESS saldbname
+ALTER USER usersaldb WITH SUPERUSER;
+\q
+$ psql -h $IPADRESS -U usersaldb saldbname > sal-db-dump
+```
+
+Pull the latest grahamgilbert/postgres container from Dockerhub and stop sal containers:
+```bash
+$ docker pull grahamgilbert/postgres
+$ docker stop postgres-sal sal
+$ docker rm postgres-sal sal
+```
+
+Run your updated grahamgilbert/postgres container: [[ Run your Database Container | Docker#database ]]!
+
+_Note:_ Your postgres container could have a new IP Address. Make changes if needed.
+
+Now restore your database with:
+```bash 
+$ docker inspect postgres-sal | grep “IPAddress”
+$ sudo -u postgres psql -h $IPADRESS saldbname
+ALTER USER usersaldb WITH SUPERUSER;
+\q
+$ psql -h $IPADRESS -U usersaldb saldbname < sal-db-dump
+```
+You should have successfully upgraded your postgres-sal container.
+
+Lastly, remember to start your Sal container: [[ Run your Sal container | Docker#running-sal ]].
